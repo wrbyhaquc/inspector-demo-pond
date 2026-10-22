@@ -35,6 +35,7 @@ T = {
                    "heron": ("Heron", "A white heron standing on the far bank; it takes fish.", {"yes": "There", "no": "None"}, "The far bank"),
                    "daylight": ("Day or night", "How bright the sky is.", {"day": "Day", "night": "Night"}, "The sky")},
         "output": "Pond equipment",
+        "camera": "Pond camera",
         "settings": {"pump_start": ("Pump on below", "The pump starts when the water level stays below this."),
                      "pump_stop": ("Pump off above", "The pump stops when the water level is back above this.")},
         "var": "Pump started by the script",
@@ -71,6 +72,7 @@ T = {
                    "heron": ("白鷺鷥", "停在遠岸的白鷺鷥,會叼走魚。", {"yes": "有", "no": "沒有"}, "遠岸"),
                    "daylight": ("白天晚上", "天空有多亮。", {"day": "白天", "night": "晚上"}, "天空")},
         "output": "魚塭設備",
+        "camera": "魚塭攝影機",
         "settings": {"pump_start": ("低於這個水位就抽水", "水位持續低於這個,就開抽水馬達。"),
                      "pump_stop": ("高於這個水位就停止", "水位回到這個以上,就關抽水馬達。")},
         "var": "抽水馬達是腳本開的",
@@ -221,7 +223,10 @@ def main():
         p = os.path.join(a.design, "project.json")
         pj = json.load(open(p, encoding="utf-8"))
         pj.update({"name": t["project"][0], "description": t["project"][1], "words": t["project"][2],
-                   "screen": {"width": 1280, "height": 720}, "plugins": []})
+                   "screen": {"width": 1280, "height": 720}, "plugins": [],
+                   # the camera this pack watches, made so on a new computer (Inspector: project.json "sources")
+                   "sources": {CAM: {"kind": "stream/http", "name": t["camera"],
+                                     "params": {"url": "http://127.0.0.1:8800/video.mjpg", "http_mode": "mjpeg", "fit": "contain"}}}})
         with open(p, "w", encoding="utf-8") as f:
             json.dump(pj, f, ensure_ascii=False, indent=1)
         pk = os.path.join(os.path.dirname(os.path.abspath(a.design)), "pack.json")      # the pack's own name too
