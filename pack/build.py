@@ -57,7 +57,7 @@ SUBS = [
 ]
 
 MAIN = {
-    "id": "pond_keeper", "name": "Pond keeper", "enabled": True, "devices": {"*": "live"},
+    "id": "pond_keeper", "name": "Pond keeper", "enabled": True, "devices": {"*": "off", "POND-CAM": "live"},
     "description": "Keeps the fish alive: oxygen at night, birds by day, the water level always.",
     "otherwise": {"type": "none", "text": "Nothing to do"}, "initial": "watching",
     "situations": [{"id": "watching", "name": "Watching the pond", "rules": [
