@@ -38,7 +38,7 @@
       <div class="grid">
         <button data-send="night">Night now</button><button data-send="day">Day now</button>
         <button data-send="heron">Heron now</button><button data-send="rain">Rain now</button>
-        <button data-send="restock">Restock fish</button>
+        <button data-send="restock">Restock fish</button><button id="drain">Water low</button>
         <select id="speed" title="real minutes per simulated day">
           <option value="2">1 day = 2 min</option><option value="6" selected>1 day = 6 min</option>
           <option value="30">1 day = 30 min</option><option value="1440">real time</option>
@@ -67,6 +67,7 @@ function show(r) {
 }
 document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => send(b.dataset.cmd + (b.classList.contains('on') ? '_off' : '_on')))
 document.querySelectorAll('[data-send]').forEach(b => b.onclick = () => send(b.dataset.send))
+document.getElementById('drain').onclick = () => send('level', 20)
 document.getElementById('speed').onchange = e => send('speed', Number(e.target.value))
 setInterval(() => fetch('/api/state').then(r => r.json()).then(show), 1000)
 fetch('/api/state').then(r => r.json()).then(show)

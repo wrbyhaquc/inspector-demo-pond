@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H = 1280, 720
 POND = (150, 175, 1130, 640)                    # the pond's bank (outer ellipse box)
-GAUGE = (1030, 255)                             # the water-level staff in the water: top of the post
+LEVEL_TUBE = (1180, 250, 24, 200)               # the level gauge on the right bank: a clear tube, x y w h
 
 
 def _font(size):
@@ -67,7 +67,7 @@ class Pond:
     # ---------------- the model ----------------
     def _new_fish(self, i):
         r = self.rng
-        return {"a": r.uniform(0, 2 * math.pi), "r": r.uniform(0.25, 0.85), "speed": r.uniform(0.05, 0.12) * r.choice([1, -1]),
+        return {"a": r.uniform(0, 2 * math.pi), "r": r.uniform(0.2, 0.7), "speed": r.uniform(0.05, 0.12) * r.choice([1, -1]),
                 "size": r.uniform(0.8, 1.25), "phase": r.uniform(0, 6.28), "hue": r.choice([(245, 130, 40), (240, 90, 50), (250, 175, 60)])}
 
     def note(self, text):
@@ -139,14 +139,14 @@ class Pond:
                 f["phase"] += dt_real * 4
 
     def land_heron(self):
-        side = self.rng.choice([(870, 215), (330, 225), (1090, 470)])
+        side = self.rng.choice([(870, 215), (560, 205), (330, 225)])     # on the far bank, where the camera sees it whole
         self.heron = {"x": side[0], "y": side[1], "stay": self.rng.uniform(1.5, 3.0), "leaving": None, "since": time.time()}
         self._heron_meal = 0.0
         self.note("a heron landed")
 
     def command(self, cmd, value=None):
         """What equipment and the demo buttons do: aerator_on / aerator_off / pump_on / pump_off / feed / scare;
-        demo: night / day / heron / rain / restock / speed (value = real minutes per day)."""
+        demo: night / day / heron / rain / level (value = %) / restock / speed (value = real minutes per day); test: does nothing."""
         cmd = (cmd or "").strip().lower()
         with self.lock:
             if cmd in ("aerator_on", "aerator_off"):
@@ -170,12 +170,16 @@ class Pond:
             elif cmd == "heron":
                 if self.heron is None:
                     self.land_heron()
+            elif cmd == "level":                 # demo: set the water level (value = %)
+                self.level = max(5.0, min(100.0, float(value)))
             elif cmd == "rain":
                 self.rain_hours = 2.0
             elif cmd == "restock":
                 while len(self.fish) < self.fish_total:
                     self.fish.append(self._new_fish(len(self.fish)))
                 self.lost_heron = self.lost_oxygen = 0
+            elif cmd == "test":                 # Inspector's "Test" button on an output: just say it arrived
+                pass
             elif cmd == "speed":
                 self.day_minutes = max(0.5, min(240.0, float(value)))
             else:
@@ -233,10 +237,10 @@ class Pond:
             d.line((gx, gy, gx + 3, gy - 8), fill=_mix(grass, (20, 60, 20), 0.5), width=2)
 
         # bank, mud, water
-        bank = _mix((60, 45, 30), (150, 115, 75), max(sun, 0.2))
+        bank = _mix((52, 48, 42), (138, 126, 108), max(sun, 0.2))       # grey-brown earth
         d.ellipse(POND, fill=bank)
         x0, y0, x1, y1 = POND
-        d.ellipse((x0 + 14, y0 + 10, x1 - 14, y1 - 10), fill=_mix(bank, (90, 70, 45), 0.6))
+        d.ellipse((x0 + 14, y0 + 10, x1 - 14, y1 - 10), fill=_mix(bank, (92, 86, 76), 0.6))
         wb = self._water_box()
         o = self.oxygen
         water = _mix((95, 125, 70), (45, 140, 165), (o - 2) / 5)
@@ -259,8 +263,11 @@ class Pond:
             if feeding:
                 tx, ty = 960, 545
                 fx, fy = fx + (tx - fx) * 0.55, fy + (ty - fy) * 0.55
-            if surfacing:
-                fx, fy = cx + math.cos(a * 0.3 + i) * rx * 0.55, cy - ry * 0.35 + math.sin(i * 1.7) * ry * 0.45
+            if surfacing:                          # up for air in open water: not by the running machine, not by the far bank
+                fx, fy = cx + math.cos(a * 0.3 + i) * rx * 0.55, cy + math.sin(i * 1.7) * ry * 0.45
+                fy = max(fy, y0 + 115)
+                if abs(fx - 360) < 120 and abs(fy - 430) < 80:
+                    fx += 240
             s = 22 * f["size"]
             ang = a + (math.pi / 2 if f["speed"] > 0 else -math.pi / 2)
             col = f["hue"]
@@ -283,13 +290,18 @@ class Pond:
 
         # the aerator (paddle wheel on floats)
         ax, ay = 360, 430
-        if self.aerator:
+        if self.aerator:                        # a white wake on both sides of the wheel, and bubbles around it
+            d.ellipse((ax - 85, ay - 40, ax + 85, ay + 40), fill=(240, 250, 255, 70))
+            for side in (-1, 1):
+                for k in range(9):
+                    wx = ax + side * (62 + k * 7 + (int(t * 40) + k * 5) % 6)
+                    wy = ay - 14 + (k * 7) % 28
+                    d.ellipse((wx - 9, wy - 6, wx + 9, wy + 6), fill=(255, 255, 255, 235))
             for k in range(26):
                 rr = 18 + (k * 37 + int(t * 60)) % 70
                 aa = k * 0.9 + t * 2
                 bx, by = ax + math.cos(aa) * rr, ay + math.sin(aa) * rr * 0.55
                 d.ellipse((bx - 5, by - 4, bx + 5, by + 4), fill=(255, 255, 255, 190))
-            d.ellipse((ax - 85, ay - 40, ax + 85, ay + 40), fill=(240, 250, 255, 70))
         d.rounded_rectangle((ax - 60, ay - 12, ax + 60, ay + 12), 6, fill=(235, 195, 40))
         spin = t * 9 if self.aerator else 0.4
         for k in range(4):
@@ -301,7 +313,7 @@ class Pond:
         d.line((ax - 60, ay, x0 + 30, ay - 40), fill=(40, 40, 40), width=3)       # its power cable to the bank
 
         # the pump's pipe (top left)
-        px0, py0 = x0 + 110, y0 + 30
+        px0, py0 = x0 + 70, y0 + 300
         d.rounded_rectangle((px0 - 70, py0 - 18, px0 + 10, py0 + 2), 6, fill=(120, 125, 135))
         if self.pump:
             for k in range(8):
@@ -319,18 +331,18 @@ class Pond:
                 u = ((k * 0.13 + t * 0.9) % 1.0)
                 bx = fx0 - 20 - u * 90 + math.sin(k) * 15
                 by = fy0 - 20 - math.sin(u * math.pi) * 60 + u * 25
-                d.ellipse((bx - 3, by - 3, bx + 3, by + 3), fill=(120, 75, 30))
+                d.ellipse((bx - 3, by - 3, bx + 3, by + 3), fill=(85, 52, 24))
 
-        # the water-level staff: a white post with marks, the water line on it
-        gx, gy = GAUGE
-        post_h = 200
-        d.rectangle((gx - 14, gy, gx + 14, gy + post_h), fill=(245, 245, 240))
+        # the level gauge: a clear tube on the bank, blue water up to the pond's level, marks every 10%
+        tx, ty, tw, th = LEVEL_TUBE
+        d.rounded_rectangle((tx - 6, ty - 8, tx + tw + 6, ty + th + 8), 6, fill=(90, 95, 105))
+        d.rectangle((tx, ty, tx + tw, ty + th), fill=(215, 222, 228))
+        top = ty + th - self.level / 100 * th
+        d.rectangle((tx, top, tx + tw, ty + th), fill=(35, 105, 215))
         for k in range(11):
-            yy = gy + post_h - k * post_h / 10
-            d.line((gx - 14, yy, gx + (4 if k % 5 else 14), yy), fill=(200, 40, 40), width=3 if k % 5 == 0 else 2)
-        wl = gy + post_h - self.level / 100 * post_h
-        d.rectangle((gx - 14, wl, gx + 14, gy + post_h), fill=water + (150,))     # under water: seen through it
-        d.line((gx - 22, wl, gx + 22, wl), fill=(255, 255, 255, 230), width=3)
+            yy = ty + th - k * th / 10
+            d.line((tx - 14, yy, tx - 7, yy), fill=(240, 240, 240), width=3 if k % 5 == 0 else 1)
+        d.text((tx - 16, ty + th + 12), "LEVEL", font=FONT_S, fill=(240, 240, 240))
 
         # the heron
         if self.heron:
