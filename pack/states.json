@@ -4,7 +4,7 @@
   "classes": [{"value": "yes", "name": "Yes", "color": "red", "key": "1"}, {"value": "no", "name": "No", "color": "green", "key": "2"}],
   "rois": [{"id": "pond", "name": "The pond", "box": [260, 250, 740, 330]}],
   "source": {"kind": "rule", "rule": "color_ratio", "params": {"roi": "pond", "colors": [{"h": [250, 27], "s": [120, 255], "v": [100, 255]}],
-             "high_value": "yes", "high_min": 0.01, "low_value": "no", "low_max": 0.005}},
+             "high_value": "yes", "high_min": 0.005, "low_value": "no", "low_max": 0.0035}},
   "review": {"enabled": true, "roi": "pond", "scale": 1}},
  {"id": "aerator_running", "name": "Aerator running", "type": "class",
   "description": "White foam and spray around the yellow paddle wheel.",

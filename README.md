@@ -47,10 +47,10 @@ You need [Inspector](https://github.com/wrbyhaquc/inspector) installed (the Runt
 
 1. **Start the pond.** `python sim/server.py`, then open http://127.0.0.1:8800/ - the control room. Leave it running.
 2. **Start Inspector.** `start.bat` (or `python -m server`) in the Inspector folder; it opens http://127.0.0.1:8765.
-3. **Install the pack.** **Packs › Install or upgrade**, choose `pack/releases/fish-pond-1.0.0.zip`
-   (`fish-pond-zh-1.0.0.zip` for the Chinese one) and let it become the running pack. Restart Inspector when it asks
+3. **Install the pack.** **Packs › Install or upgrade**, choose `pack/releases/fish-pond-1.0.1.zip`
+   (`fish-pond-zh-1.0.1.zip` for the Chinese one) and let it become the running pack. Restart Inspector when it asks
    (the button on that page, or close it and start it again). From a command line instead:
-   `python -m project.pack install pack/releases/fish-pond-1.0.0.zip --activate` in the Inspector folder, then start it.
+   `python -m project.pack install pack/releases/fish-pond-1.0.1.zip --activate` in the Inspector folder, then start it.
 4. **Check the camera.** **Sources** shows *Pond camera*: the pack brings its address
    (`http://127.0.0.1:8800/video.mjpg`), so nothing has to be typed. Running the simulator on another computer or port?
    Change the address there.
